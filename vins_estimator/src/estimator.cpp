@@ -739,7 +739,7 @@ void Estimator::optimization()
     
     // Step1:添加待优化状态量
     // Step1.1：添加sliding window frame的state(pose[p,q](7)，[speed,ba,bg](9))
-    //  ceres用的是double数组，所以在下面用vector2double做类型装换，把原来的Ps Vs Bgs Bas转到para_Pose para_SpeedBias下
+    // ceres用的是double数组，所以在下面用vector2double做类型装换，把原来的Ps Vs Bgs Bas转到para_Pose para_SpeedBias下
     for (int i = 0; i < WINDOW_SIZE + 1; i++)
     {
         ceres::LocalParameterization *local_parameterization = new PoseLocalParameterization();
