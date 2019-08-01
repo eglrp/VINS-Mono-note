@@ -1,0 +1,69 @@
+角点检测，最常用的方法莫过于Harris角点检测，opencv中也提供了Harris角点检测的接口，即cv::cornerHarris()，但是Harris角点检测存在很多缺陷（如角点是像素级别的，速度较慢等），OpenCV中的另一个功能更为强大的函数——cv::goodFeaturesToTrack()，不仅支持Harris角点检测，也支持Shi-Tomasi角点检测。但是，该函数检测到的角点依然是像素级别的，若想获取更为精细的角点坐标，则需要调用cv::cornerSubPix()函数进一步细化处理， 即亚像素。
+
+	void cv::goodFeaturesToTrack(
+		cv::InputArray image, 				// 输入图像（CV_8UC1 CV_32FC1）
+		cv::OutputArray corners, 			// 输出角点vector
+		int maxCorners, 					// 最大角点数目
+		double qualityLevel, 				// 质量水平系数 角点检测可接受的最小特征值
+		double minDistance, 				// 角点之间最小距离，小于此距离的点忽略
+		cv::InputArray mask = noArray(), 	// 感兴趣区域 mask=0的点忽略 
+		int blockSize = 3, 					// 使用的邻域范围
+		bool useHarrisDetector = false, 	// false ='Shi Tomasi metric'，true为Harris
+		double k = 0.04 					// 权重系数 Harris角点检测时使用
+	);
+
+第1个参数是输入图像（8位或32位单通道图）。
+
+第2个参数是检测到的所有角点，类型为vector或数组，由实际给定的参数类型而定。
+		如果是vector，那么它应该是一个包含cv::Point2f的vector对象；
+		如果是cv::Mat,那么它的每一行对应一个角点，点的x、y位置分别是两列。
+
+第3个参数用于限定检测到的点数的最大值。
+
+第4个参数表示检测到的角点的质量水平（通常是0.10到0.01之间的数值，不能大于1.0）。
+
+第5个参数用于区分相邻两个角点的最小距离（小于这个距离得点将进行合并）。
+
+第6个参数是mask，如果指定，它的维度必须和输入图像一致，且在mask值为0处不进行角点检测。
+
+第7个参数是blockSize，表示在计算角点时参与运算的区域大小，常用值为3，但是如果图像的分辨率较高则可以考虑使用较大一点的值。
+
+第8个参数用于指定角点检测的方法，如果是true则使用Harris角点检测，false则使用Shi Tomasi算法。
+
+第9个参数是在使用Harris算法时使用，最好使用默认值0.04。
+
+
+亚像素角点检测cv::cornerSubPix()	
+
+goodFeaturesToTrack()提取到的角点只能达到像素级别，在很多情况下并不能满足实际的需求，这时需要使用cv::cornerSubPix()对检测到的角点作进一步的优化计算，使角点的精度达到亚像素级别。
+
+	void cv::cornerSubPix(
+		cv::InputArray image, 			// 输入图像
+		cv::InputOutputArray corners, 	// 角点（既作为输入也作为输出）
+		cv::Size winSize, 				// 区域大小为 NXN; N=(winSize*2+1)
+		cv::Size zeroZone, 				// 类似于winSize，但是总具有较小的范围，Size(-1,-1)表示忽略
+		cv::TermCriteria criteria 		// 停止优化的标准
+	);
+
+第1个参数是输入图像，和cv::goodFeaturesToTrack()中的输入图像是同一个图像。
+
+第2个参数是检测到的角点，即是输入也是输出。
+
+第3个参数是计算亚像素角点时考虑的区域的大小，大小为NXN; N=(winSize*2+1)。
+
+第4个参数作用类似于winSize，但是总是具有较小的范围，通常忽略（即Size(-1, -1)）。
+
+第5个参数用于表示计算亚像素时停止迭代的标准，可选的值有cv::TermCriteria::MAX_ITER 、cv::TermCriteria::EPS（可以是两者其一，或两者均选），前者表示迭代次数达到了最大次数时停止，后者表示角点位置变化的最小值已经达到最小时停止迭代。二者均使用cv::TermCriteria()构造函数进行指定。
+
+
+Harris角点检测是一种直接基于灰度图像的角点提取算法，稳定性较高，但是也可能出现有用信息丢失的情况。
+	cv::cornerHarris(
+	 	InputArray, 	// 输入图像 
+	 	OutputArray, 	// 输出为表示角点强度的32位浮点图像 
+	 	int, 			// 导数平滑的相邻像素的尺寸 
+	 	int, 			// 梯度计算的滤波器孔径大小 
+	 	double,			// Harris参数
+	 	int				// borderType = BORDER_DEFAULT
+	 ); 
+
+

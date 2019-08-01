@@ -1,0 +1,155 @@
+sensor_msgs::PointCloud{
+	std_msgs/Header header
+	geometry_msgs/Point32[] points			// points中存储了所有当前图像中追踪到的角点的图像归一化坐标
+	sensor_msgs/ChannelFloat32[] channels	// channels中存储了关于该角点的相关信息: 角点的id、像素横纵坐标、xy方向速度5个
+
+	// sensor_msgs::PointCloud中所有的信息都是在void img_callback(const sensor_msgs::ImageConstPtr &img_msg)中处理得到的
+	// 实际依赖的是FeatureTracker类，处理图像的入口是void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time)
+}
+
+
+void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time){
+	// FeatureTracker类中几个比较重要的数据结构，如下：
+	camodocal::CameraPtr m_camera; 			//相机模型，保存了相机的内参和相机投影方程
+	cv::Mat prev_img, cur_img, forw_img; 	//原始图像数据。prev_img好像没啥用，cur_img保存了上一帧图像，forw_img保存了当前帧。
+	vector<cv::Point2f> prev_pts, cur_pts, forw_pts; //图像中的角点坐标
+	vector<int> track_cnt; 					//当前追踪到的角点一共被多少帧图像追踪到
+	vector<int> ids; 						//当前追踪到的角点的ID，这个ID非常关键，保存了帧与帧之间角点的匹配关系。
+}
+
+
+midPointIntegration(
+	// 中点积分 输入:
+	_dt,		// 当前IMU数据和前一个IMU数据的时间差
+	acc_0, 		// 前一个IMU加速度计数据
+	gyr_0, 		// 前一个IMU陀螺仪数据
+	_acc_1, 	// 当前IMU加速度计数据
+	_gyr_1, 	// 当前IMU加速度计数据
+	delta_p, 	// 前一个IMU 平移预计分测量值
+	delta_q, 	// 前一个IMU 旋转预积分测量值
+	delta_v,	// 前一个IMU 速度预积分测量值
+    linearized_ba, linearized_bg, 	// 前一个ba和bg
+    // 输出
+	result_delta_p, result_delta_q, result_delta_v, // 当前IMU预计分测量值
+    result_linearized_ba, result_linearized_bg, 	// 当前ba和bg
+	1
+);
+
+
+class IntegrationBase{
+    Eigen::Vector3d delta_p; 	// 平移预积分
+    Eigen::Quaterniond delta_q; // 旋转预积分
+    Eigen::Vector3d delta_v; 	// 速度预积分
+    Eigen::Matrix<double, 15, 15> jacobian, covariance; // 雅可比矩阵和协方差矩阵
+}
+
+
+map<double, ImageFrame> all_image_frame; // 键是时间戳，值是图像帧，图像帧中保存了图像帧的位姿，预积分量和关于角点的信息
+class ImageFrame
+{
+	map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>> > > points;
+	double t;
+	Matrix3d R;
+	Vector3d T;
+	IntegrationBase *pre_integration;
+	bool is_key_frame;
+};
+
+
+// 利用FeatureManager f_manager保存的信息，可以得到vector<SFMFeature> sfm_f，作为后续单目初始化的数据关联。
+vector<SFMFeature> sfm_f;
+struct SFMFeature
+{
+    bool state;
+    int id; // 角点的id
+    vector<pair<int,Vector2d>> observation; // 保存了这个角点在一些列图像中的归一化坐标，以及那些图像帧的id。
+    double position[3]; // 保存角点的三维坐标
+    double depth;
+};
+
+class FeatureManager{
+	// 通过FeatureManager可以查询滑动窗口内所有的角点信息，以及这些角点被滑动窗口内的哪些帧观测到了
+	...
+    list<FeaturePerId> feature; 
+}
+
+class FeaturePerId{
+    // 以feature_id为索引，并保存了出现该角点的第一帧的id，
+	...
+    const int feature_id;
+    int start_frame;
+    vector<FeaturePerFrame> feature_per_frame;	
+}
+
+class FeaturePerFrame{
+	// 保存了归一化坐标，图像坐标以及深度	
+	...
+    Vector3d point;
+    Vector2d uv;
+    double z;
+}
+
+
+class Estimator{
+    Vector3d Ps[(WINDOW_SIZE + 1)]; 	// 平移
+    Vector3d Vs[(WINDOW_SIZE + 1)]; 	// 速度
+    Matrix3d Rs[(WINDOW_SIZE + 1)]; 	// 旋转
+    Vector3d Bas[(WINDOW_SIZE + 1)]; 	// 加速度偏差
+    Vector3d Bgs[(WINDOW_SIZE + 1)]; 	// 陀螺仪偏差
+}
+
+
+void Estimator::optimization(
+	// 残差项的构造和求解
+)
+
+bool Estimator::relativePose(Matrix3d &relative_R, Vector3d &relative_T, int &l)
+// 在真正进行初始化之前，会对视差进行检查，依赖的函数的是
+// 当平均视差大于30并且通过基础矩阵求解得到的内点数目大于12，可以认为当前的角点匹配足够支持单目初始化
+
+
+Estimator::relativePose
+// 可以得到当前帧和滑动窗口内哪一帧(保存在变量l中)是视差足够的，并计算当前帧与第l帧之间的R和T，计算得到R和T其实已经完成了一部分的初始化。
+
+
+bool GlobalSFM::construct(...)
+// 真正的完成单目初始化
+1.通过得到有足够视差的l帧和与当前帧之间的R和T进行三角化得到地图点，即调用void GlobalSFM::triangulateTwoFrames(...)。
+2.有了三角化的地图点之后，对第l帧和当前帧之间所有的图像帧通过 pnp 求解其位姿，即调用bool GlobalSFM::solveFrameByPnP(...),得到位姿之后，再次进行三角化得到新的地图点。
+3.利用已有的地图点，对l之前的所有图像帧进行 pnp 求解其位姿，然后再次进行三角化得到新的地图点。
+4.对于其他没有被三角化的角点，再次进行三角化得到新的地图点。
+5.通过一次 full BA 来对地图点和滑动窗口内的关键帧位姿进行优化。这里的 full BA 只对滑动窗口内的关键帧位姿作优化，而不优化地图点。VINS在建立重投影误差的时候很有意思，它并不在图像平面求像素误差，而是在归一化平面求误差。
+6.在视觉初始化的最后，再次对所有的帧求解一次 pnp。因为前5步只得到了滑动窗口内所有关键帧的位姿，但由于并不是第一次视觉初始化就能成功，此时图像帧数目有可能会超过滑动窗口的大小(根据图像帧的视差判断是否为关键帧，然后选择滑窗的策略)，此时要对那些不被包括在滑动窗口内的图像帧位姿进行求解。
+
+此时可以说，整个视觉初始化部分就完成了。
+
+
+
+// 视觉-IMU对齐
+VIO初始化的有两个很重要的目的。
+首先，通过 IMU 得到的观测量是具备绝对尺度的，而单目初始化的结果是不具备绝对尺度的，因此将 IMU 的观测值作为观测量加入到视觉初始化的结果中，可以恢复出视觉初始化缺失的尺度。
+其次，IMU的观测结果是否准确，在很大程度上依赖于对 IMU 加速素和角速度的 bias 估计是否准确，此时将视觉的观测结果作为约束项加入到 IMU 的积分计算中，可以得到 bias 的初始估计。
+VINS-Mono在将视觉观测和 IMU 观测对齐时，一共经历了4个步骤。
+
+第一步是角速度(bias) bw 的估计。
+void solveGyroscopeBias(map<double, ImageFrame> &all_image_frame, Vector3d* Bgs)
+对于连续的两帧图像，通过之前的初始化得到了其在世界坐标系下的旋转 qwi,qwi+1，通过 IMU 预积分得到 δqii+1
+...
+在 VINS-Mono 中采用的是通过 LDLT 分解求解δbw。得到 δbw 之后，通过 δbw 重新计算所有的预积分量，即调用函数void IntegrationBase::repropagate(...)
+
+
+
+第二步是对每一个图像帧的速度Vi，重力g和尺度s进行估计。
+
+
+
+第三步是对重力 g 进行修正。
+重力大小(magnitude)
+void RefineGravity(...)
+
+为了使得 g 的值可以收敛，void RefineGravity(...)中对 Hbkbk+1XI=zbkbk+1 方程迭代求解4次。
+
+第四步完成初始化
+得到重力 g 之后，即可根据其与方向向量[0,0,1]之间的旋转，得到世界坐标系与第一帧相机坐标系之间旋转，从而可以将所有图像帧的旋转转换到世界坐标系下。
+其次根据得到的尺度s，对地图点坐标和平移进行缩放。这部分代码在void visualInitialAlign()函数的后半部分。
+
