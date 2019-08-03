@@ -1,4 +1,5 @@
 VINS-Mono视觉前端
+
 VINS-Mono采用LK光流法作为视觉前端，与前端相关的代码都在feature_tracker目录下。
 （计算部分像素运动的称为稀疏光流，Lk即是；计算所有像素的称为稠密光流）
 
@@ -52,9 +53,12 @@ vector<int> ids; 			// 保存了当前追踪到的角点的ID，这个ID非常�
 
 	a)图像处理的入口是void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time)，是整个视觉前端最关键的代码。
 
-		上一帧的图像和图像中的角点分别保存在cur_img和cur_pts中;利用cv::calcOpticalFlowPyrLK(cur_img, forw_img, cur_pts, forw_pts, status, err, cv::Size(21, 21), 3),函数可以得到当前图像中能通过光流追踪到的角点的坐标，保存在forw_pts中。
+		上一帧的图像和图像中的角点分别保存在cur_img和cur_pts中;
+		利用cv::calcOpticalFlowPyrLK(cur_img, forw_img, cur_pts, forw_pts, status, err, cv::Size(21, 21), 3),
+		函数可以得到当前图像中能通过光流追踪到的角点的坐标，保存在forw_pts中。
 
-		由于前一帧保存的角点并不一定全部能够被当前帧追踪到，追踪的成功与否保存在status中。因此利用status和void reduceVector(vector<cv::Point2f> &v, vector<uchar> status)函数对track_cnt，ids等进行更新。
+		由于前一帧保存的角点并不一定全部能够被当前帧追踪到，追踪的成功与否保存在status中。
+		因此利用status和void reduceVector(vector<cv::Point2f> &v, vector<uchar> status)函数对track_cnt，ids等进行更新。
 
 		经过更新之后track_cnt里面保存都是能够追踪到的角点的追踪次数，执行+1操作。
 
@@ -66,9 +70,12 @@ vector<int> ids; 			// 保存了当前追踪到的角点的ID，这个ID非常�
 		值得注意的是这里有个参数MIN_DIST，这个参数保证2个相邻角点之间的最小距离，通过这个参数可以在一定程度上保证角点的均匀分布。
 
 	c)mask设置
-		这里mask的设置也是有讲究的，因为在forw_img中已经通过光流追踪到了一部分角点，当再次从forw_img中提取角点的时候，通过设置相应的mask,来保证角点的提取不会重复。设置mask是通过void FeatureTracker::setMask()实现的。
+		这里mask的设置也是有讲究的，因为在forw_img中已经通过光流追踪到了一部分角点，
+		当再次从forw_img中提取角点的时候，通过设置相应的mask,来保证角点的提取不会重复。
+		设置mask是通过void FeatureTracker::setMask()实现的。
 		
-		void FeatureTracker::setMask()里面有个很有趣的操作就是会根据角点被追踪的次数进行排序，即track_cnt, ids, forw_pts都是按照角点被追踪的次数排序的。
+		void FeatureTracker::setMask()里面有个很有趣的操作就是会根据角点被追踪的次数进行排序，
+		即track_cnt, ids, forw_pts都是按照角点被追踪的次数排序的。
 		
 		之后会把新追踪到的角点n_pts加入到forw_pts和ids中去。
 		

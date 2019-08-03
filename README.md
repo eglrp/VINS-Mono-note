@@ -31,7 +31,7 @@ Download [EuRoC MAV Dataset](http://projects.asl.ethz.ch/datasets/doku.php?id=km
 ```
     roslaunch vins_estimator euroc.launch 
     roslaunch vins_estimator vins_rviz.launch
-    rosbag play YOUR_PATH_TO_DATASET/MH_01_easy.bag 
+    rosbag play ~/dataset/MH_01_easy.bag 
 ```
 (If you fail to open vins_rviz.launch, just open an empty rviz, then load the config file: file -> Open Config-> YOUR_VINS_FOLDER/config/vins_rviz_config.rviz)
 
@@ -68,7 +68,7 @@ Set the **load_previous_pose_graph** to 1 before doing 3.1.1. The system will lo
 ```
     roslaunch ar_demo 3dm_bag.launch
     roslaunch ar_demo ar_rviz.launch
-    rosbag play YOUR_PATH_TO_DATASET/ar_box.bag 
+    rosbag play ~/dataset/ar_box.bag 
 ```
 We put one 0.8m x 0.8m x 0.8m virtual box in front of your view. 
 
