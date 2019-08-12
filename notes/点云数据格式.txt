@@ -1,0 +1,52 @@
+ROS中表示点云的数据结构有： 
+	sensor_msgs::PointCloud
+	sensor_msgs::PointCloud2
+	pcl::PointCloud<T>			PCL点云库定义的数据格式，在rviz中不可显示
+
+
+sensor_msgs::PointCloud2 和 pcl::PointCloud<T> 之间的转换使用
+	pcl::fromROSMsg 和 pcl::toROSMsg 
+
+sensor_msgs::PointCloud  和 sensor_msgs::PointCloud2 之间的转换使用
+	sensor_msgs::convertPointCloud2ToPointCloud 和 sensor_msgs::convertPointCloudToPointCloud2.
+
+
+
+struct PointCloud2
+{
+	PointCloud2 () : header (), height (0), width (0), fields (),
+            is_bigendian (false), point_step (0), row_step (0),
+            data (), is_dense (false)
+    {}
+ 
+    ::std_msgs::Header header;
+ 
+    pcl::uint32_t height;
+    pcl::uint32_t width;
+
+    std::vector< ::sensor_msgs::PointField>  fields;
+ 
+    pcl::uint8_t is_bigendian;
+    pcl::uint32_t point_step;
+    pcl::uint32_t row_step;
+ 
+    std::vector<pcl::uint8_t> data;
+ 
+    pcl::uint8_t is_dense;
+ 
+	public:
+    typedef boost::shared_ptr< ::sensor_msgs::PointCloud2> Ptr;
+    typedef boost::shared_ptr< ::sensor_msgs::PointCloud2  const> ConstPtr;
+}; 
+
+
+
+
+如何在ROS中使用PCL
+
+
+
+
+
+
+

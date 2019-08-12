@@ -22,7 +22,7 @@ queue<sensor_msgs::ImuConstPtr> imu_buf;                // 先进先出
 queue<sensor_msgs::PointCloudConstPtr> feature_buf;
 queue<sensor_msgs::PointCloudConstPtr> relo_buf;
 
-int sum_of_wait = 0;    // 这个变量没有使用？
+int sum_of_wait = 0;
 
 std::mutex m_buf;
 std::mutex m_state;
@@ -436,7 +436,10 @@ int main(int argc, char **argv)
     // 3 发布用于rviz显示的Topic(visualization.cpp)
     registerPub(n);
 
-    // 4 订阅几个话题，频率为2000Hz，将imu，feature，raw_image数据（用于回环检测）通过各自的回调函数封装起来
+    // 4 订阅几个话题，队列长度为2000，将imu，feature，raw_image数据（用于回环检测）通过各自的回调函数封装起来
+    /* create a templated subscriber
+    ros::Subscriber sub = nh.subscribe<pcl::PointCloud<pcl::PointXYZRGB> > (topic, queue_size, callback);*/
+
     //      订阅 IMU话题，调用 imu_callback() 将新得到的IMU数据放入到 imu_buf 队列中
     ros::Subscriber sub_imu = n.subscribe(IMU_TOPIC, 2000, imu_callback, ros::TransportHints().tcpNoDelay());
 

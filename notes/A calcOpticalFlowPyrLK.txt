@@ -1,0 +1,40 @@
+calcOpticalFlowPyrLK
+
+光流描述的是图像上每个像素点的灰度的位置（速度）变化情况，光流的研究是利用图像序列中的像素强度数据的时域变化和相关性来确定各自像素位置的“运动”。研究光流场的目的就是为了从图片序列中近似得到不能直接得到的运动场。
+
+
+光流法的前提假设：
+- （1）相邻帧之间的亮度恒定；
+- （2）相邻视频帧的取帧时间连续，或者，相邻帧之间物体的运动比较“微小”；
+- （3）保持空间一致性；即，同一子图像的像素点具有相同的运动；
+
+
+CV_EXPORTS_W void 
+calcOpticalFlowPyrLK( 
+		InputArray prevImg, 				// 标定图像的灰度图
+		InputArray nextImg, 				// 想搜寻的图像的灰度图 
+		InputArray prevPts, 				// 输入的标定图像的特征点（可以是其他特征点检测方法找到的点） 
+		CV_OUT InputOutputArray nextPts, 	// 输出场景的特征点 
+		OutputArray status, 				// 输出状态向量(uchar)
+		OutputArray err, 					// 输出错误向量
+		Size winSize=Size(21,21), 			// 在每个金字塔水平搜寻窗口的尺寸 
+		int maxLevel=3, 					// 金字塔的高度，初始为3层
+		TermCriteria criteria=TermCriteria( TermCriteria::COUNT+TermCriteria::EPS, 30, 0.01), 
+		double derivLambda=0.5, 
+		int flags=0, 
+		double minEigThreshold=1e-4);
+					
+
+OutputArray status, 	// 输出状态向量(uchar),如果在当前图像中能够光流得到标定的特征点位置改变，则设置status的对应位置为1，否则设置为0 
+OutputArray err, 		// 输出错误向量；向量的每个元素被设为相应特征的一个错误，误差测量的类型可以在flags参数中设置；
+						   如果流不被发现然后错误未被定义（使用status（状态）参数找到此情形）。
+
+					
+calcOpticalFlowPyrLK必须和其他的角点识别算法进行搭配使用，比如我这里使用的goodFeaturesToTrack，将其他的角点识别算法中获得的角点作为光流算法的prev_Pts
+status 的大小和当前需要识别的光流移动的特征点大小一样，所以我们可以判定当前的图像是否还能与标定图像进行光流的依据					
+					
+
+
+
+
+
